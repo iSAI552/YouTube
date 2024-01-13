@@ -44,8 +44,9 @@ router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 
 router.route("/current-user").get(verifyJWT, getCurrentUser)
 
-router.route("/update-account").patch(updateAccountDetails) // used patch instead of post otherwise all the details will be updated
+router.route("/update-account").patch(verifyJWT,updateAccountDetails) // used patch instead of post otherwise all the details will be updated
 //                                                              but with patch only the changed things get updated
+
 router
 .route("/avatar")
 .patch(

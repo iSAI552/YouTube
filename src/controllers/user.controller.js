@@ -21,7 +21,7 @@ const generateAccessTokenAndRefreshToken = async (userId) => { // created a gene
 
         user.refreshToken = refreshToken
         await user.save({validateBeforeSave: false})
-        
+
         return {accessToken, refreshToken}
 
     } catch (error) {
@@ -228,7 +228,7 @@ const changeCurrentPassword = asyncHandler( async(req, res) => {
         throw new ApiError(400, "Invalid Old Password")
     }
 
-    user.password = password
+    user.password = newPassword
     await user.save({validateBeforeSave: true})
 
     return res
@@ -260,7 +260,7 @@ const updateAccountDetails = asyncHandler( async(req, res) => {
         throw new ApiError(400, "All fields are required")
     }
 
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -332,7 +332,7 @@ const updateUserCoverImage = asyncHandler( async (req, res) => {
         req.user?._id,
         {
             $set: {
-                coverImage: coverImage.url
+                coverImage: coverImage?.url
             }
         },
         {new: true}
