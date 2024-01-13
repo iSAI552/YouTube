@@ -5,6 +5,8 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import zodSchema from "../utils/ZodSchema.js";
+import { removeTempFilesSync } from "../utils/removeTemp.js";
 
 // Declaring options as global variable as it is used everytime to send a secure cookie.
 const options = {
@@ -46,19 +48,29 @@ const registerUser = asyncHandler( async (req, res) => {
 //     throw new ApiError(400, "fullName field is mandatory")
 //    }
 
-    if (
-        [fullName, email, username, password].some((field) =>
-        field?.trim() ===""    
-        )
-    ) {
-        throw new ApiError(400, "All fields are required")
-    }
+    // if (
+    //     [fullName, email, username, password].some((field) =>
+    //     field?.trim() ===""    
+    //     )
+    // ) {
+    //     throw new ApiError(400, "All fields are required")
+    // }
 
     const userExisted = await User.findOne({
         $or: [{ username }, { email }]
     })
 
-    if(userExisted) throw new ApiError(409, "User with email or username already exists");
+    if(userExisted) {
+        removeTempFilesSync();
+        throw new ApiError(409, "User with email or username already exists");
+    }
+
+    try {
+        zodSchema.parse({fullName, email, username, password})
+    } catch (error) {
+        removeTempFilesSync();
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+    }
 
     const avatarLocalPath = req.files?.avatar?.[0]?.path
     console.log(req.files)
@@ -72,6 +84,7 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     if (!avatarLocalPath) {
+        removeTempFilesSync();
         throw new ApiError(400, "Avatar file is required")
     }
 
