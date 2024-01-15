@@ -436,7 +436,7 @@ const getUserChannelPofile = asyncHandler( async (req, res) => {
     .json( new ApiResponse(
         200,
         channel[0],
-        "User channl fetched successfully"
+        "User channel fetched successfully"
     ))
 
 
