@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose"
+import mongoose, {isValidObjectId} from "mongoose"
 import {Tweet} from "../models/tweet.model.js"
 import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
@@ -25,6 +25,9 @@ const createTweet = asyncHandler(async (req, res) => {
 const getUserTweets = asyncHandler(async (req, res) => {
     // TODO: get user tweets
     const {userId} = req.params
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid userId")
+    }
     // find all the tweets that belong to the user with userId using aggregation pipeline
     const tweets = await Tweet.aggregate([
         {
@@ -46,6 +49,10 @@ const updateTweet = asyncHandler(async (req, res) => {
     //TODO: update tweet
     const {tweetId} = req.params
     const {tweetContent} = req.body
+
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Invalid tweetId")
+    }
 
     const tweet = await Tweet.findById(tweetId)
 
@@ -69,6 +76,9 @@ const updateTweet = asyncHandler(async (req, res) => {
 const deleteTweet = asyncHandler(async (req, res) => {
     //TODO: delete tweet
     const {tweetId} = req.params
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Invalid tweetId")
+    }
 
     const tweet = await Tweet.findById(tweetId)
 
