@@ -68,6 +68,9 @@ const getVideoById = asyncHandler(async (req, res) => {
     if (!video) throw new ApiError(404, "Video not found")
     if (!video.isPublished) throw new ApiError(403, "Video not published")
 
+    video.views += 1 // updating the views count on the video
+    await video.save({ validateBeforeSave: false })
+
     return res.status(200).json(
         new ApiResponse(
             200,
