@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js"
 import { removeTempFilesSync } from "../utils/removeTemp.js"
 
 
@@ -114,6 +114,7 @@ const updateVideo = asyncHandler(async (req, res) => {
             removeTempFilesSync()
             throw new ApiError(500, "Error while uploading thumbnail")
         }
+        await deleteFromCloudinary([video.thumbnail])
         video.thumbnail = thumbnail.url
     }
 
@@ -143,7 +144,14 @@ const deleteVideo = asyncHandler(async (req, res) => {
     const video = await Video.findById(videoId)
     if (!video) throw new ApiError(404, "Video not found")
     if (video.owner.toString() !== req.user._id.toString()) throw new ApiError(403, "You are not allowed to delete this video")
-    Video.deleteOne({ _id: videoId }).catch(error => {
+    const thumbnailUri = video.thumbnail
+    const videoUri = video.videoFile
+    Video.deleteOne({ _id: videoId })
+    .then(async () => {
+        await deleteFromCloudinary([thumbnailUri])
+        await deleteFromCloudinary([videoUri], "video")
+    })
+    .catch(error => {
         throw new ApiError(500, error, "Error while deleting video")
     })
     return res.status(200).json(
