@@ -1,7 +1,7 @@
 import {asyncHandler} from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js";
+import {deleteFromCloudinary, uploadOnCloudinary} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -73,9 +73,9 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar?.[0]?.path
-    console.log(req.files)
-    console.log(req.body)
-    console.log(userExisted)
+    // console.log(req.files)
+    // console.log(req.body)
+    // console.log(userExisted)
 
     // const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
     let coverImageLocalPath;
@@ -303,6 +303,8 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
+    await deleteFromCloudinary([req.user?.avatar])
+
     if(!avatar.url){
         throw new ApiError(500, "Error while uploading the Avatar")
     }
@@ -340,6 +342,8 @@ const updateUserCoverImage = asyncHandler( async (req, res) => {
     if(!coverImage.url){
         throw new ApiError(500, "Error while uploading the Cover Image")
     }
+
+    await deleteFromCloudinary([req.user?.coverImage])
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
@@ -436,7 +440,7 @@ const getUserChannelPofile = asyncHandler( async (req, res) => {
     .json( new ApiResponse(
         200,
         channel[0],
-        "User channl fetched successfully"
+        "User channel fetched successfully"
     ))
 
 
