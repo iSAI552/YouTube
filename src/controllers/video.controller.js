@@ -11,6 +11,52 @@ import { removeTempFilesSync } from "../utils/removeTemp.js"
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
+    const queryObject = {}
+    if (query) {
+        queryObject.title = { $regex: query, $options: "i" }
+    }
+    if (userId) {
+        if (!isValidObjectId(userId)) {
+            throw new ApiError(400, "Invalid userId")
+        }
+        queryObject.owner = userId
+    }
+    const sortObject = {}
+    if (sortBy) {
+        sortObject[sortBy] = sortType || "asc"
+    }
+    const videos = await Video.aggregatePaginate([
+        { $match: queryObject },
+        {
+            $lookup: {
+                from: 'users', // replace 'users' with your actual User collection name
+                localField: 'owner',
+                foreignField: '_id',
+                as: 'owner'
+            }
+        },
+        {
+            $project: {
+                owner: 1,
+                videoFile: 1,
+                thumbnail: 1,
+                title: 1,
+                description: 1,
+                duration: 1,
+                views: 1,
+                isPublished: 1,
+                createdAt: 1,
+                updatedAt: 1,
+            }
+        },
+        { $sort: sortObject }
+    ], { page, limit });
+
+    if (!videos) throw new ApiError(500, "Videos could not be fetched")
+    return res.status(200).json(
+        new ApiResponse(200, videos, "Videos fetched successfully")
+    )
+
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
